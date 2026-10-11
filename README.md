@@ -1,114 +1,47 @@
-# ModelRouter (A-01) — Cost-, Latency- & Quality-Aware AI Gateway
-**VORTEXA 3.0 | Domain 2: AI Systems & Infrastructure**
+# VORTEXA 3.0 · ModernRouter
 
-ModelRouter is an intelligent, offline-capable AI gateway that receives requests, estimates task complexity, strictly filters candidate models against hard constraints (latency, budget, capability, context length), deterministically ranks valid models, and executes queries with safe failover.
+Intelligent AI model routing: classify a request, pick the best eligible model (task fit, cost, latency,
+capability, context, availability), fall back safely on failure, explain the decision, and keep history.
+Backend: FastAPI + SQLite. Frontend: vanilla JS served by the same server (no build step).
 
----
+## Run
+    # Windows: double-click run.bat      macOS/Linux: ./run.sh
+    # or manually:
+    cd backend
+    pip install -r ../requirements.txt
+    uvicorn main:app --reload --port 8000
+Open http://127.0.0.1:8000 and log in with the seeded demo account `demo@vortexa.ai` / `demo1234`,
+or sign up (the OTP appears on the verify screen in dev mode and in the server console).
+Interactive API docs: http://127.0.0.1:8000/docs
 
-## 1. Core Principles & Architecture
+## Tests
+    python tests/test_core.py        # routing, fallback, OTP, history (stdlib only)
 
-### **Filter → Rank → Try**
-1. **Filter (Hard Constraints)**:
-   - Evaluates every candidate model against all constraints:
-     - Model endpoint availability (`available == true`)
-     - Minimum required capability (`model.capability >= required_capability`)
-     - Maximum permitted latency (`model.latency_ms <= max_latency_ms`)
-     - Maximum estimated cost (`estimated_cost <= max_cost`)
-     - Sufficient context window (`model.context_window >= required_context`)
-   - **Rigidity Guarantee**: Collects **every applicable rejection reason**. Never stops at the first violation. Never trades off constraints (e.g. high capability never excuses latency breaches).
-2. **Rank (Deterministic Sorting)**:
-   - Only surviving models from the filter stage enter the ranking stage.
-   - Supports 3 optimization preferences:
-     - `lowest_cost`: Estimated cost ascending $\rightarrow$ expected latency ascending $\rightarrow$ ID lexicographical.
-     - `lowest_latency`: Expected latency ascending $\rightarrow$ estimated cost ascending $\rightarrow$ ID lexicographical.
-     - `highest_capability`: Capability descending $\rightarrow$ estimated cost ascending $\rightarrow$ ID lexicographical.
-3. **Try (Safe Failover Execution)**:
-   - Sequentially attempts valid models in ranked order.
-   - Enforces runtime latency limits: If simulated execution exceeds the permitted latency cap, the attempt is marked as failed.
-   - **Failover Invariant**: Only models from the original valid ranked list are attempted. The router **never** reruns the filter with relaxed constraints or downgrades to a rejected model.
-   - **Distinct Failure Outcomes**:
-     - `"No valid model can satisfy all the requested constraints."` (0 models passed filter)
-     - `"All models that satisfied the request constraints failed during execution."` (valid models passed filter, but all experienced runtime timeouts or errors)
+## Layout
+    backend/main.py              FastAPI app + endpoints
+    backend/request_analyzer.py  keyword task classifier (coding / summarization / reasoning / general)
+    backend/models_registry.py   model metadata + failure-injection overrides
+    backend/routing_engine.py    eligibility filter + weighted scoring + explanation
+    backend/fallback.py          bounded retry across ranked models
+    backend/mock_models.py       simulated models (swap for real provider adapters)
+    backend/service.py           orchestration: analyse > route > execute > record
+    backend/auth.py, database.py users/OTP/sessions, history, analytics
+    backend/tts.py               optional ElevenLabs proxy
+    frontend/                    index.html, styles.css, app.js (all 9 screens)
 
----
+## API
+| Endpoint | Auth | Purpose |
+|---|---|---|
+| GET /health | no | status, voice provider |
+| GET /models | no | model metadata + active overrides |
+| POST /auth/signup, /auth/resend-otp, /auth/verify-otp, /auth/login, /auth/logout; GET /auth/me | – | accounts + OTP |
+| POST /route | yes | `{prompt, preferences}` → selected model, response, reasons, candidates, attempts |
+| POST /simulate | yes | what-if comparison (normal vs scenario), not saved |
+| POST /simulate-failure | yes | persistent failure injection (`unavailable`/`slow`/`fail`/`clear`); disabled in production |
+| GET/DELETE /history, GET /analytics | yes | history and KPIs |
+| POST /tts | yes | ElevenLabs audio (501 if no key) |
 
-## 2. AI Complexity Estimator & Uncertainty Policy
-
-- **Offline Local Rule/Signal Engine**:
-  - Token counter: `max(1, ceil(len(prompt) / 4))`
-  - Signal detection: Keywords categorized into 5 difficulty tiers (definitions $\rightarrow$ explanations $\rightarrow$ standard code/SQL $\rightarrow$ multithreaded debugging/proofs $\rightarrow$ formal verification/consensus).
-  - Structural features: Source code fences, syntax regex, LaTeX & mathematical notation, multi-step sub-tasks, prompt length.
-- **Uncertainty Safety Rule**:
-  - If confidence $< 0.60$ or if the top two candidate levels are ambiguous, the required capability is **conservatively rounded UP**, never down.
-- **User Override**:
-  - Users can manually select the capability level (1–5) to bypass automatic estimation.
-- **Pluggable External LLM Adapter**:
-  - Configurable behind `ENABLE_EXTERNAL_LLM_ESTIMATOR=true`. If unavailable, cleanly falls back to the local rules engine with full telemetry.
-
----
-
-## 3. Technology Stack
-
-- **Backend**:
-  - Python 3.11+ / FastAPI / Pydantic v2 / Uvicorn
-  - SQLite persistent storage (`modelrouter.db`)
-  - Pytest automated test suite (24 passing unit, property, and scenario tests)
-- **Frontend**:
-  - React 18 / TypeScript / Vite
-  - Tailwind CSS (cyber navy / electric neon theme matching VORTEXA 3.0 specification)
-  - Recharts for real-time observability charts
-  - Lucide React icons
-  - Web Speech API for voice dictation & speech synthesis audio explanations (ElevenLabs style)
-
----
-
-## 4. Honesty & Engineering Limitations
-
-In accordance with Section 3.4 of the problem statement:
-- **Team-Calibrated Capability Scores**: Model capabilities (1 to 5) are team-defined calibration tiers, not universal benchmarks.
-- **Simulated Latencies**: Latencies, artificial jitter, and failure modes are generated by fictional endpoint simulators and do not incur real API billing.
-- **Approximate Token Counting**: Character-based token estimation (`len(prompt) / 4`) is approximate (~4 characters per token).
-- **Estimates May Differ from Reality**: Heuristic complexity scores can misclassify edge-case prompts, which is why conservative rounding and manual overrides are provided.
-
----
-
-## 5. Quick Start Instructions
-
-### Prerequisites
-- Python 3.11+ with `pip`
-- Node.js 18+ with `npm`
-
-### Step 1: Start Backend (Port 8000)
-```bash
-cd backend
-python -m pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8000
-```
-API Documentation will be live at: `http://localhost:8000/docs`
-
-### Step 2: Start Frontend (Port 5173)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open `http://localhost:5173` in your browser.
-
-### Run Automated Tests
-```bash
-cd backend
-python -m pytest -v
-```
-
----
-
-## 6. Official Judge Demo Scenarios (1-Click in UI)
-
-The frontend Home and Ask pages include 1-click execution for all 7 scenarios from Section 3.2:
-1. **Simple question, loose limits**: Selects cheapest model (Mini).
-2. **Long contract analysis**: High context requirement ($10\text{K}$) and high quality; only Large qualifies.
-3. **Tight cost cap on a hard task**: High quality needed but budget is tiny; cleanly outputs *"No valid model can satisfy all the requested constraints"*.
-4. **Judge marks chosen model unavailable**: Toggle a model offline in Simulation Lab; router automatically selects the next valid candidate.
-5. **Judge forces chosen model slow**: Toggle `force_slow`; runtime latency exceeds cap and router fails over to the next valid model.
-6. **Ambiguous prompt**: Low-confidence trigger activates conservative round-up policy.
-7. **Switch preference to lowest latency**: Preference changes winner from cheapest to fastest model.
+## What is simulated / not done
+- Models are mocks: responses, prices, and latencies are simulated. Add real adapters next to `mock_models.py`.
+- "Continue with Google" and "Forgot password" are UI placeholders (need OAuth credentials / reset flow).
+- Without SMTP the OTP is shown in dev mode instead of emailed.
