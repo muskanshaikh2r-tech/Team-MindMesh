@@ -176,3 +176,13 @@ svg.chart{width:100%;height:auto}
   .main{padding:16px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* polish */
+.brand b{white-space:nowrap}
+.side .brand b{font-size:15px;letter-spacing:.1em}
+.kv div{font-size:12px} .kv b{white-space:nowrap}
+.scene{display:block;width:calc(100% + 56px);margin:28px -28px -40px;height:auto;max-height:230px;opacity:.95;pointer-events:none}
+.recent{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)} .recent:last-child{border:0}
+.recent .rp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfd9ff}
+.orb{width:100%;max-width:300px;margin:auto}
+@media (max-width:900px){.scene{width:calc(100% + 32px);margin:24px -16px -16px}}

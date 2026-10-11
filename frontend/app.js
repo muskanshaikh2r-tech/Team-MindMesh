@@ -15,7 +15,7 @@ const state = {
   prefs: JSON.parse(localStorage.getItem('vx_prefs') || 'null') || { ...DEFAULT_PREFS },
   labPrefs: { ...LAB_PREFS },
   last: null, filter: 'all', draft: '', pendingEmail: '', devOtp: null, otpDeadline: 0,
-  voiceTab: false, labResult: null,
+  voiceTab: false, labResult: null, offline: false,
 };
 let timer = null, audio = null;
 
@@ -28,6 +28,10 @@ function toast(msg, err = false) {
 }
 
 async function api(path, { method = 'GET', body, auth = true } = {}) {
+  if (state.offline) {
+    try { return await window.localApi(path, { method, body, token: state.token }); }
+    catch (e) { if (e.status === 401 && auth) logout(false); throw e; }
+  }
   const headers = { 'Content-Type': 'application/json' };
   if (auth && state.token) headers.Authorization = 'Bearer ' + state.token;
   let res;
@@ -123,10 +127,11 @@ function bindAsk() {
 }
 
 /* ---------- auth views ---------- */
+const ORB = `<svg class="orb" viewBox="0 0 300 260" aria-hidden="true"><defs><radialGradient id="og" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#8fe3ff"/><stop offset=".45" stop-color="#2f6bff" stop-opacity=".85"/><stop offset="1" stop-color="#0a1450" stop-opacity="0"/></radialGradient></defs><ellipse cx="150" cy="215" rx="95" ry="14" fill="#18b8ff" opacity=".35"/><ellipse cx="150" cy="215" rx="60" ry="8" fill="#6a4cff" opacity=".6"/><circle cx="150" cy="115" r="92" fill="url(#og)"/><g fill="none" stroke="#bfeaff" stroke-width="1.2" opacity=".8"><circle cx="150" cy="115" r="70"/><ellipse cx="150" cy="115" rx="70" ry="28"/><ellipse cx="150" cy="115" rx="28" ry="70"/><path d="M95 80q55 30 110 0M95 150q55-30 110 0"/></g>${[[150, 45], [220, 115], [150, 185], [80, 115], [200, 65], [100, 165], [200, 165], [100, 65]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#fff"/>`).join('')}</svg>`;
 function authFrame(form, signup = false) {
   const feats = [['⚙', 'Intelligent Model Selection'], ['⏱', 'Cost & Latency Optimization'], ['🎙', 'Voice Powered AI'], ['▤', 'Real-time Analytics']];
   return `<div class="auth"><div class="auth-card"><div class="auth-brand">${brand()}<p class="tagline">Smarter Routing. Better AI. Your Voice.</p>
-    <div class="features">${feats.map(([i, t]) => `<div><span class="fi">${i}</span>${t}</div>`).join('')}</div></div>
+    ${signup ? ORB : `<div class="features">${feats.map(([i, t]) => `<div><span class="fi">${i}</span>${t}</div>`).join('')}</div>`}</div>
     <div class="auth-form">${form}</div></div></div>`;
 }
 function viewLogin() {
@@ -210,11 +215,15 @@ function viewVerify() {
 }
 
 /* ---------- main views ---------- */
-function viewHome() {
+const SCENE = `<svg class="scene" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a5c" stop-opacity="0"/><stop offset="1" stop-color="#1a3fd0" stop-opacity=".55"/></linearGradient><linearGradient id="mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4fd8"/><stop offset="1" stop-color="#050c26"/></linearGradient></defs><rect width="1200" height="220" fill="url(#sky)"/>${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 97) % 1200}" cy="${(i * 53) % 110}" r="${i % 3 ? 0.9 : 1.6}" fill="#bcd4ff" opacity="${0.35 + (i % 5) * 0.12}"/>`).join('')}<path d="M0 220V150l90-50 70 40 110-90 100 80 90-45 120 95 100-70 110 60 130-85 120 90 90-40 90 55V220z" fill="url(#mt)" opacity=".85"/><path d="M0 220V185l130-45 110 50 150-60 120 55 170-65 130 60 140-40 250 60V220z" fill="#060f33"/></svg>`;
+async function viewHome() {
+  let recent = [];
+  try { recent = (await api('/history?limit=3')).history; } catch {}
+  const rec = recent.length ? `<div class="card" style="margin-top:16px"><h3>Recent routing</h3>${recent.map((x) => `<div class="recent"><span class="rp">${esc(x.prompt.slice(0, 70))}</span><span class="tag">${esc(x.category)}</span><span class="tag ${x.status === 'success' ? 'ok' : 'bad'}">${esc(x.selected_model || x.status)}</span></div>`).join('')}</div>` : '';
   return [shell('home', `<h1>Welcome back, ${esc(state.user.name.split(' ')[0])}! 👋</h1>
     <p class="lead">Ask your question, set your preferences, and let ModelRouter find the best model for you.</p>
     ${askHtml('Type your question or speak…')}${prefsHtml(state.prefs, 'p-')}
-    <button class="btn block" id="go">Route My Question &nbsp;→</button>`), () => { bindShell(); bindAsk(); bindPrefs(state.prefs, 'p-', true); }];
+    <button class="btn block" id="go">Route My Question &nbsp;→</button>${rec}${SCENE}`), () => { bindShell(); bindAsk(); bindPrefs(state.prefs, 'p-', true); }];
 }
 function viewPlayground() {
   const v = state.voiceTab;
@@ -339,6 +348,7 @@ function viewSettings() {
   const el = state.health.tts === 'elevenlabs';
   return [shell('settings', `<h1>Settings</h1><p class="lead">Account and voice options.</p>
     <div class="card" style="margin-bottom:14px"><h3>Account</h3><div class="kv"><div>Name<b>${esc(state.user.name)}</b></div><div>Email<b>${esc(state.user.email)}</b></div></div></div>
+    <div class="card" style="margin-bottom:14px"><h3>Mode</h3><p class="muted">${state.offline ? 'Standalone demo: routing engine runs in this browser, data is stored locally.' : 'Connected to the FastAPI backend.'}</p></div>
     <div class="card" style="margin-bottom:14px"><h3>Voice</h3><p class="muted">Explanation voice: <span class="tag ${el ? 'ok' : 'warn'}">${el ? 'ElevenLabs' : 'Browser voice'}</span></p>${el ? '' : '<p class="muted" style="margin-top:8px">Set <code>ELEVENLABS_API_KEY</code> on the server to use ElevenLabs voices.</p>'}</div>
     <div class="card"><h3>Routing defaults</h3><button class="btn ghost small" id="reset">Reset preferences</button></div>`),
   () => { bindShell(); $('#reset').onclick = () => { state.prefs = { ...DEFAULT_PREFS }; localStorage.setItem('vx_prefs', JSON.stringify(state.prefs)); toast('Preferences reset.'); }; }];
@@ -361,4 +371,12 @@ async function render() {
   $('#app').innerHTML = html; if (bind) bind();
 }
 window.addEventListener('hashchange', render);
-(async () => { try { state.health = await api('/health', { auth: false }); } catch {} render(); })();
+(async () => {
+  try {
+    if (location.protocol === 'file:') throw new Error('no backend');
+    const r = await fetch('/health'); const h = r.ok ? await r.json() : null;
+    if (!h || h.status !== 'ok') throw new Error('no backend');
+    state.health = h;
+  } catch { state.offline = true; state.health = { status: 'ok', tts: 'browser', mode: 'standalone' }; }
+  render();
+})();

@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VORTEXA 3.0 · ModelRouter</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%236a4cff'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%2318b8ff'/%3E%3C/svg%3E">
+  <style>
+:root{
+  --bg:#040a1c; --bg2:#071230; --panel:rgba(13,24,58,.72); --panel2:rgba(20,34,78,.6);
+  --line:rgba(94,128,255,.24); --line2:rgba(94,128,255,.42);
+  --text:#e9efff; --muted:#8fa2d4; --dim:#667bb0;
+  --a1:#6a4cff; --a2:#18b8ff; --grad:linear-gradient(90deg,#6a4cff,#18b8ff);
+  --ok:#2ee59d; --bad:#ff5d7a; --warn:#ffb84d;
+  --font:'Inter','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.45}
+body{background:radial-gradient(1200px 600px at 80% -10%,#14246b55,transparent),radial-gradient(900px 500px at -10% 110%,#3a1d8f44,transparent),var(--bg);min-height:100vh}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--a2);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+.muted{color:var(--muted)} .dim{color:var(--dim)}
+
+/* buttons */
+.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:600;background:var(--grad);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:filter .15s,transform .05s}
+.btn:hover{filter:brightness(1.1)} .btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;border:1px solid var(--line2);color:var(--text)}
+.btn.small{padding:7px 12px;font-size:12.5px;border-radius:8px}
+.link{background:none;border:0;color:var(--a2);padding:0;font-weight:500}
+.link:hover{text-decoration:underline}
+
+/* inputs */
+.field{display:block;margin-bottom:14px}
+.field>span{display:block;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.input{display:flex;align-items:center;gap:10px;background:#081133;border:1px solid var(--line);border-radius:10px;padding:0 12px}
+.input:focus-within{border-color:var(--a2)}
+.input input{flex:1;background:none;border:0;outline:0;padding:12px 0;min-width:0}
+.input .ico{color:var(--dim)}
+.eye{background:none;border:0;color:var(--dim);padding:4px}
+select{appearance:none;background:#081133 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238fa2d4' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 12px center;border:1px solid var(--line);border-radius:10px;padding:10px 32px 10px 12px;width:100%}
+select option{background:#0a1438}
+
+/* auth */
+.auth{min-height:100vh;display:grid;place-items:center;padding:24px}
+.auth-card{width:min(980px,100%);display:grid;grid-template-columns:1.05fr 1fr;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:var(--panel);backdrop-filter:blur(8px);box-shadow:0 30px 80px #0008}
+.auth-brand{padding:40px 36px;background:radial-gradient(500px 400px at 30% 60%,#2a3fc755,transparent),linear-gradient(160deg,#0b1744,#050c26);display:flex;flex-direction:column;gap:26px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand b{font-size:26px;letter-spacing:.14em;font-weight:700}
+.brand b i{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;letter-spacing:.04em}
+.brand small{display:block;color:var(--muted);font-size:12px;letter-spacing:.04em}
+.tagline{font-size:17px;color:var(--a2);font-weight:500}
+.features{display:grid;gap:16px;margin-top:6px}
+.features div{display:flex;align-items:center;gap:14px;color:#cfd9ff}
+.features .fi{width:38px;height:38px;border-radius:10px;border:1px solid var(--line2);display:grid;place-items:center;background:#0c1850;color:var(--a2)}
+.auth-form{padding:40px 38px}
+.auth-form h2{font-size:22px;margin-bottom:4px}
+.auth-form .sub{color:var(--muted);margin-bottom:18px}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:20px}
+.tabs button{flex:1;background:none;border:0;padding:10px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--a2);border-color:var(--a2)}
+.or{display:flex;align-items:center;gap:12px;color:var(--dim);font-size:12px;margin:16px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.center{text-align:center}
+.row-end{display:flex;justify-content:flex-end;margin:-6px 0 14px}
+.verify-card{width:min(480px,100%);padding:34px;border:1px solid var(--line);border-radius:18px;background:var(--panel);text-align:center}
+.mail{width:64px;height:64px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;background:var(--grad);font-size:26px}
+.otp{display:flex;gap:10px;justify-content:center;margin:20px 0 10px}
+.otp input{width:46px;height:52px;text-align:center;font-size:22px;background:#081133;border:1px solid var(--line);border-radius:10px;outline:0}
+.otp input:focus{border-color:var(--ok);box-shadow:0 0 0 3px #2ee59d22}
+.devhint{margin:12px 0;font-size:12.5px;color:var(--warn);background:#ffb84d14;border:1px dashed #ffb84d66;border-radius:8px;padding:8px}
+
+/* shell */
+.shell{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+.side{border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:16px;background:#050c2299;position:sticky;top:0;height:100vh}
+.side .brand b{font-size:17px}
+.side .brand small{font-size:10px}
+.me{display:flex;align-items:center;gap:10px;padding:8px;border-radius:12px;background:var(--panel2)}
+.avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6a4cff,#18b8ff);display:grid;place-items:center;font-weight:700;flex:none}
+.me b{display:block;font-size:13px} .me small{color:var(--muted);font-size:11px;word-break:break-all}
+.nav{display:grid;gap:4px}
+.nav a{display:flex;align-items:center;gap:10px;color:var(--muted);text-decoration:none;padding:10px 12px;border-radius:10px;border:1px solid transparent}
+.nav a:hover{color:var(--text);background:#13236033}
+.nav a.on{color:#fff;background:linear-gradient(90deg,#2a3fc7aa,#1b4fd155);border-color:var(--line2)}
+.nav .g{width:18px;text-align:center}
+.side .spacer{flex:1}
+.main{padding:22px 28px 40px;min-width:0}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-bottom:10px}
+.pill{border:1px solid var(--line2);background:#0c1850;color:var(--text);border-radius:10px;padding:7px 12px;font-size:12.5px}
+h1{font-size:26px;margin-bottom:4px}
+.lead{color:var(--muted);margin-bottom:18px}
+
+/* cards */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.card h3{font-size:15px;margin-bottom:12px}
+.askbox{display:flex;align-items:center;gap:12px;background:#081133;border:1px solid var(--line2);border-radius:14px;padding:10px 12px}
+.askbox textarea{flex:1;background:none;border:0;outline:0;resize:none;min-height:44px;max-height:140px;padding:8px 0}
+.count{color:var(--dim);font-size:12px}
+.mic{width:42px;height:42px;border-radius:50%;border:0;background:var(--grad);display:grid;place-items:center;color:#fff;flex:none;font-size:18px}
+.mic.live{animation:pulse 1.1s infinite;background:linear-gradient(90deg,#ff5d7a,#ff9a5d)}
+@keyframes pulse{50%{box-shadow:0 0 0 10px #ff5d7a22}}
+.prefs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.pref{background:#081133;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.pref label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.pref select{background-color:transparent;border:0;padding:4px 24px 4px 0;font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{background:none;border:0;padding:7px 14px;color:var(--muted)}
+.seg button.on{background:#1a2c85;color:#fff}
+.headrow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.mic-big{width:92px;height:92px;font-size:34px;margin:18px auto;display:grid}
+
+/* comparison */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.mcard{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--panel)}
+.mcard.sel{border-color:var(--ok);box-shadow:0 0 0 1px #2ee59d55,0 0 30px #2ee59d18}
+.mcard.rej{opacity:.78}
+.mhead{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.mhead b{font-size:15px} .mhead small{display:block;color:var(--muted);font-size:11.5px}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--a2);background:#0b17504d}
+.tag.ok{color:var(--ok);border-color:#2ee59d66;background:#2ee59d14}
+.tag.bad{color:var(--bad);border-color:#ff5d7a66;background:#ff5d7a14}
+.tag.warn{color:var(--warn);border-color:#ffb84d66;background:#ffb84d14}
+.kv{display:grid;gap:5px;margin:12px 0;font-size:12.5px}
+.kv div{display:flex;justify-content:space-between;gap:8px;color:var(--muted)} .kv b{color:var(--text);font-weight:600}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.details{display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}
+.details ul{margin:4px 0 0;padding-left:16px}
+.mcard.open .details{display:block}
+.grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:16px}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.stat{background:#081133;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.stat small{display:block;color:var(--muted);font-size:11.5px} .stat b{font-size:17px}
+.status{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.status .dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#2ee59d22;color:var(--ok);font-size:18px}
+.status.bad .dot{background:#ff5d7a22;color:var(--bad)}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:8px}
+.checks li{display:flex;gap:10px;color:#cfd9ff} .checks li:before{content:"✓";color:var(--ok);font-weight:700}
+.resp{white-space:pre-wrap;background:#081133;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13.5px;max-height:320px;overflow:auto}
+.attempts{display:grid;gap:6px;margin-top:10px;font-size:12.5px}
+.attempts div{display:flex;gap:8px;align-items:center;color:var(--muted)}
+.player{display:flex;align-items:center;gap:14px;background:#0a1650;border:1px solid var(--line2);border-radius:12px;padding:12px;margin-top:14px}
+.play{width:40px;height:40px;border-radius:50%;border:0;background:var(--grad);color:#fff;font-size:15px;flex:none}
+.wave{display:flex;align-items:center;gap:3px;height:34px;flex:1}
+.wave span{width:3px;border-radius:2px;background:linear-gradient(#18b8ff,#6a4cff);height:30%}
+.wave.playing span{animation:bar .9s ease-in-out infinite}
+@keyframes bar{50%{height:100%}}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .btn{margin-top:14px}
+
+/* lab */
+.sw{position:relative;width:44px;height:24px;flex:none}
+.sw input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0;z-index:1}
+.sw i{position:absolute;inset:0;border-radius:99px;background:#1a2552;border:1px solid var(--line2);transition:.15s}
+.sw i:after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.15s}
+.sw input:checked+i{background:var(--a1)} .sw input:checked+i:after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:2px solid var(--a2);outline-offset:2px}
+.scn{display:grid;grid-template-columns:1fr 200px auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.result-banner{display:flex;gap:12px;align-items:flex-start;background:#0a1650;border:1px solid var(--line2);border-radius:12px;padding:14px;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:500}
+.tablewrap{overflow-x:auto}
+
+/* analytics */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi small{color:var(--muted);display:block;margin-bottom:6px} .kpi b{font-size:26px}
+.bars{display:grid;gap:10px}
+.bars .b{display:grid;grid-template-columns:90px 1fr 36px;gap:10px;align-items:center;font-size:12.5px}
+.bars .track{height:10px;border-radius:99px;background:#0c1850;overflow:hidden} .bars .track i{display:block;height:100%;background:var(--grad)}
+svg.chart{width:100%;height:auto}
+
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:#0e1b52;border:1px solid var(--line2);padding:11px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.2s;max-width:90vw;z-index:50}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{border-color:var(--bad)}
+
+@media (max-width:900px){
+  .auth-card{grid-template-columns:1fr} .auth-brand{display:none}
+  .shell{grid-template-columns:1fr} .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center}
+  .nav{display:flex;flex-wrap:wrap} .side .spacer{display:none} .me{display:none}
+  .prefs,.kpis{grid-template-columns:repeat(2,1fr)} .grid2{grid-template-columns:1fr} .scn{grid-template-columns:1fr}
+  .main{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* polish */
+.brand b{white-space:nowrap}
+.side .brand b{font-size:15px;letter-spacing:.1em}
+.kv div{font-size:12px} .kv b{white-space:nowrap}
+.scene{display:block;width:calc(100% + 56px);margin:28px -28px -40px;height:auto;max-height:230px;opacity:.95;pointer-events:none}
+.recent{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)} .recent:last-child{border:0}
+.recent .rp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#cfd9ff}
+.orb{width:100%;max-width:300px;margin:auto}
+@media (max-width:900px){.scene{width:calc(100% + 32px);margin:24px -16px -16px}}
+
+</style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+/* Standalone mode: the same routing engine as the Python backend, running in the browser.
+   Used automatically when no backend is reachable (e.g. you open standalone.html directly).
+   Everything is simulated and stored in localStorage (or memory if storage is blocked). */
+(function () {
+  'use strict';
+  const mem = {};
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? (k in mem ? mem[k] : d) : JSON.parse(v); } catch { return k in mem ? mem[k] : d; } },
+    set(k, v) { mem[k] = v; try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+  };
+  const fail = (status, message) => Object.assign(new Error(message), { status });
+  const sleep = (t) => new Promise((r) => setTimeout(r, t));
+  const TIME_SCALE = 0.15, OTP_TTL = 180, MAX_ATTEMPTS = 3;
+
+  /* ---------- registry ---------- */
+  const ALL = ['general', 'summarization', 'coding', 'reasoning'];
+  const MODELS = [
+    { id: 'model-a', name: 'Model A', tagline: 'Fast & Affordable', tasks: ['general', 'summarization'], cost_in: 0.001, cost_out: 0.002, latency_ms: 200, capability: 2, context_tokens: 4000, availability: 0.99, status: 'available', specialties: [], badges: ['Fast', 'Low Cost'], failure_rate: 0.01 },
+    { id: 'model-b', name: 'Model B', tagline: 'Balanced Performance', tasks: ALL, cost_in: 0.003, cost_out: 0.006, latency_ms: 700, capability: 4, context_tokens: 8000, availability: 0.98, status: 'available', specialties: ['coding'], badges: ['Balanced'], failure_rate: 0.02 },
+    { id: 'model-c', name: 'Model C', tagline: 'Highest Quality', tasks: ALL, cost_in: 0.010, cost_out: 0.020, latency_ms: 1500, capability: 5, context_tokens: 32000, availability: 0.98, status: 'available', specialties: ['reasoning'], badges: ['Best Quality', 'High Cost'], failure_rate: 0.02 },
+    { id: 'model-d', name: 'Model D', tagline: 'Specialized Model', tasks: ['coding'], cost_in: 0.005, cost_out: 0.010, latency_ms: 1800, capability: 3, context_tokens: 16000, availability: 0.95, status: 'available', specialties: ['coding'], badges: ['High Latency'], failure_rate: 0.05 },
+    { id: 'model-e', name: 'Model E', tagline: 'Experimental', tasks: ['general', 'summarization', 'reasoning'], cost_in: 0.002, cost_out: 0.004, latency_ms: 1200, capability: 3, context_tokens: 16000, availability: 0.60, status: 'limited', specialties: [], badges: ['Limited Availability'], failure_rate: 0.30 },
+  ];
+  let overrides = store.get('vx_overrides', {});
+
+  function effective(extra) {
+    const merged = JSON.parse(JSON.stringify(overrides));
+    for (const [k, v] of Object.entries(extra || {})) merged[k] = Object.assign(merged[k] || {}, v);
+    const out = MODELS.map((m0) => {
+      const m = JSON.parse(JSON.stringify(m0)), ov = merged[m.id] || {};
+      if (ov.unavailable) { m.status = 'unavailable'; m.badges = m.badges.filter((b) => b !== 'Limited Availability').concat('Unavailable'); }
+      if (ov.latency_ms) { m.latency_ms = ov.latency_ms; m.badges = m.badges.filter((b) => b !== 'Fast' && b !== 'High Latency').concat('High Latency'); }
+      return m;
+    });
+    return [out, merged];
+  }
+
+  /* ---------- analyzer ---------- */
+  const KW = {
+    coding: ['code', 'function', 'c++', 'cpp', 'python', 'java', 'javascript', 'typescript', 'bug', 'debug', 'compile', 'algorithm', 'sql', 'regex', 'class', 'pointer', 'api', 'script', 'stack trace', 'exception', 'recursion', '```', 'def', '#include', 'react', 'html', 'css', 'rust', 'golang'],
+    summarization: ['summarize', 'summarise', 'summary', 'tl;dr', 'tldr', 'shorten', 'key points', 'condense', 'brief overview', 'recap'],
+    reasoning: ['prove', 'why does', 'why is', 'analyze', 'analyse', 'compare', 'trade-off', 'tradeoff', 'step by step', 'derive', 'evaluate', 'design a', 'optimize', 'strategy', 'calculate', 'pros and cons', 'implications', 'reason about', 'puzzle', 'logic'],
+  };
+  const PRIORITY = ['coding', 'summarization', 'reasoning', 'general'];
+  const MINCAP = { general: 1, summarization: 2, coding: 3, reasoning: 4 };
+  const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const has = (t, k) => new RegExp('(?<![\\w])' + esc(k.trim()) + '(?![\\w])').test(t);
+  function analyze(prompt) {
+    const t = prompt.toLowerCase();
+    const scores = {}; for (const c of Object.keys(KW)) scores[c] = KW[c].filter((k) => has(t, k)).length;
+    const best = Math.max(...Object.values(scores));
+    let category = 'general'; if (best > 0) category = PRIORITY.find((c) => scores[c] === best);
+    const signals = Object.entries(scores).filter(([, n]) => n).map(([c, n]) => `${c}: ${n} keyword match(es)`);
+    const words = (prompt.match(/\w+/g) || []).length;
+    let cx = 1; if (words > 40) cx++; if (words > 150) cx++; if (category === 'coding' || category === 'reasoning') cx++; if (scores.reasoning >= 2) cx++; cx = Math.min(cx, 5);
+    const inTok = Math.max(1, Math.round(prompt.length / 4));
+    return { category, complexity: cx, min_capability: MINCAP[category], input_tokens: inTok, est_output_tokens: 300 + 100 * cx, signals: signals.length ? signals : ['no specialised keywords: default route'] };
+  }
+
+  /* ---------- routing ---------- */
+  const W = { low_cost: [0.5, 0.2, 0.2, 0.1], balanced: [0.3, 0.25, 0.3, 0.15], high_quality: [0.1, 0.15, 0.65, 0.1] };
+  const BL = { low_cost: 'Low Cost', balanced: 'Balanced', high_quality: 'High Quality' };
+  const estCost = (m, i, o) => Math.round((i / 1000 * m.cost_in + o / 1000 * m.cost_out) * 1e6) / 1e6;
+  function evaluate(models, a, p) {
+    const w = W[p.budget] || W.balanced, need = Math.max(p.min_capability, a.min_capability);
+    const maxC = Math.max(...models.map((m) => m.cost_in + m.cost_out)) || 1, maxL = Math.max(...models.map((m) => m.latency_ms)) || 1;
+    const cands = models.map((m) => {
+      const why = [];
+      if (m.status === 'unavailable') why.push('Currently unavailable'); else if (m.status !== 'available') why.push('Limited availability');
+      if (!m.tasks.includes(a.category)) why.push(`Not configured for ${a.category} tasks`);
+      if (m.capability < need) why.push(`Capability ${m.capability}/5 is below the required ${need}/5`);
+      if (m.latency_ms > p.max_latency_ms) why.push(`Latency ${m.latency_ms} ms exceeds your ${p.max_latency_ms} ms limit`);
+      if (m.context_tokens < p.context_tokens) why.push(`Context ${Math.floor(m.context_tokens / 1000)}K is below the requested ${Math.floor(p.context_tokens / 1000)}K`);
+      if (m.context_tokens < a.input_tokens) why.push('Prompt does not fit in the context window');
+      const c = { model: m, eligible: !why.length, score: 0, est_cost: estCost(m, a.input_tokens, a.est_output_tokens), reasons_rejected: why };
+      if (c.eligible) {
+        const s = w[0] * (1 - (m.cost_in + m.cost_out) / maxC) + w[1] * (1 - m.latency_ms / maxL) + w[2] * (m.capability / 5) + w[3] * m.availability + (m.specialties.includes(a.category) ? 0.08 : 0);
+        c.score = Math.round(s * 1e4) / 1e4;
+      }
+      return c;
+    });
+    const ranked = cands.filter((c) => c.eligible).sort((x, y) => y.score - x.score || x.est_cost - y.est_cost);
+    return [ranked, cands, need];
+  }
+  const fmtLat = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + 's' : n + ' ms');
+  function explain(c, a, p, need, n) {
+    const m = c.model;
+    const r = [`Meets your quality requirement (${m.capability}/5, needed ${need}/5)`,
+      `Fits your ${BL[p.budget] || p.budget} budget preference (about $${c.est_cost.toFixed(4)} for this request)`,
+      `Latency is under ${p.max_latency_ms / 1000}s (${fmtLat(m.latency_ms)})`,
+      `Context length (${Math.floor(m.context_tokens / 1000)}K) is sufficient for ${Math.floor(p.context_tokens / 1000)}K tokens`];
+    if (m.tasks.includes(a.category)) r.push(`Supports ${a.category} tasks` + (m.specialties.includes(a.category) ? ' (specialty)' : ''));
+    r.push(`Highest routing score (${c.score}) among ${n} eligible model(s)`);
+    return r;
+  }
+
+  /* ---------- mock execution ---------- */
+  const POINTERS = 'A pointer is a variable that stores a memory address. Declare one with `int* p;` and point it at a variable using the address-of operator: `int x = 5; int* p = &x;`. Dereference with `*p` to read or write the value at that address (`*p = 10;` changes x). Pointers enable dynamic memory (`new`/`delete`), arrays, and passing large data without copying. Prefer smart pointers (`std::unique_ptr`, `std::shared_ptr`) in modern C++ and never dereference `nullptr`.';
+  const TPL = {
+    general: (p) => `Here is a concise answer to your question: ${p}`,
+    summarization: (p) => `Summary: the text centres on ${p}. Key points are extracted and condensed.`,
+    coding: (p) => `Here is a code-oriented answer for: ${p}\n\n\`\`\`\n// simulated solution skeleton\n\`\`\``,
+    reasoning: (p) => `Let's reason step by step about: ${p}\n1. Define the problem.\n2. Compare the options.\n3. Conclude.`,
+  };
+  async function invoke(m, prompt, category, ov) {
+    if (ov.fail) throw new Error(`${m.name} is not responding`);
+    const base = ov.latency_ms || m.latency_ms, sim = Math.round(base * (0.9 + Math.random() * 0.2));
+    if (sim > 5000) { await sleep(5000 * TIME_SCALE); throw new Error(`${m.name} timed out after 5000 ms`); }
+    await sleep(sim * TIME_SCALE);
+    if (Math.random() < m.failure_rate) throw new Error(`${m.name} returned a transient error`);
+    const lp = prompt.toLowerCase();
+    let body = lp.includes('pointer') && (lp.includes('c++') || lp.includes('cpp')) ? POINTERS : (TPL[category] || TPL.general)(`"${prompt.trim().replace(/\n/g, ' ').slice(0, 140)}"`);
+    if (m.capability >= 5) body += '\n\n(Extended detail: edge cases, trade-offs and examples included.)';
+    return { text: `${body}\n\n[Simulated response from ${m.name}: mock output, not a real LLM.]`, latency_ms: sim };
+  }
+
+  async function routeRequest(userId, prompt, prefs, scenario, record) {
+    const a = analyze(prompt), [models, ov] = effective(scenario), [ranked, cands, need] = evaluate(models, a, prefs);
+    const res = {
+      prompt, category: a.category, complexity: a.complexity, input_tokens: a.input_tokens, signals: a.signals, preferences: { ...prefs },
+      required_capability: need,
+      candidates: cands.map((c) => ({ ...c.model, eligible: c.eligible, score: c.score, est_cost_usd: c.est_cost, reasons_rejected: c.reasons_rejected })),
+      eligible_count: ranked.length, rejected_count: cands.length - ranked.length,
+      selected_model: null, response: null, fallback_used: false, attempts: [], reasons: [], explanation: '', estimated: null, actual_latency_ms: 0, simulated: true,
+    };
+    if (!ranked.length) {
+      res.status = 'no_eligible_model';
+      res.message = 'No model meets all of your requirements. Try a higher latency limit, a lower minimum capability or a smaller context length.';
+      res.explanation = res.message;
+    } else {
+      let used = null, resp = null;
+      for (const c of ranked.slice(0, MAX_ATTEMPTS)) {
+        const t0 = performance.now();
+        try {
+          resp = await invoke(c.model, prompt, a.category, ov[c.model.id] || {});
+          res.attempts.push({ model_id: c.model.id, model: c.model.name, outcome: 'success', error: null, latency_ms: resp.latency_ms });
+          used = c; break;
+        } catch (e) { res.attempts.push({ model_id: c.model.id, model: c.model.name, outcome: 'failed', error: e.message, latency_ms: Math.round(performance.now() - t0) }); }
+      }
+      if (!used) {
+        res.status = 'failed';
+        res.message = `All eligible models failed (${res.attempts.map((x) => x.model).join(', ')}). No further fallback is permitted.`;
+        res.explanation = res.message;
+      } else {
+        res.status = 'success'; res.selected_model = used.model; res.response = resp.text; res.actual_latency_ms = resp.latency_ms;
+        res.fallback_used = used !== ranked[0];
+        const reasons = explain(used, a, prefs, need, ranked.length);
+        if (res.fallback_used) reasons.unshift(`Fallback: ${ranked[0].model.name} failed, so ${used.model.name} took over`);
+        res.reasons = reasons;
+        res.estimated = { cost_usd: used.est_cost, latency_ms: used.model.latency_ms, quality: `${used.model.capability}/5` };
+        res.explanation = `I selected ${used.model.name} for this ${a.category} request. ` + reasons.slice(0, 4).map((r) => r + '.').join(' ');
+        res.message = `Routing completed. Selected model: ${used.model.name}.`;
+      }
+    }
+    if (record) {
+      const h = store.get('vx_history', []), id = (h.at(-1)?.id || 0) + 1;
+      h.push({ id, user_id: userId, prompt, category: a.category, selected_model: res.selected_model?.name || null, status: res.status, fallback_used: res.fallback_used ? 1 : 0, est_cost: res.estimated?.cost_usd || 0, latency_ms: res.actual_latency_ms, reason: res.reasons.slice(0, 3).join('; ') || res.message, created_at: Date.now() / 1000 });
+      store.set('vx_history', h.slice(-500)); res.id = id;
+    }
+    return res;
+  }
+  async function simulate(prompt, prefs, scenario) {
+    const before = await routeRequest(null, prompt, prefs, null, false), after = await routeRequest(null, prompt, prefs, scenario, false), notes = [];
+    for (const [mid, ov] of Object.entries(scenario)) {
+      const n = MODELS.find((m) => m.id === mid).name;
+      if (ov.unavailable) notes.push(`${n} is now unavailable.`);
+      if (ov.latency_ms) notes.push(`${n} is now slower (${ov.latency_ms / 1000}s).`);
+      if (ov.fail) notes.push(`${n} now fails on every call.`);
+    }
+    const b = before.selected_model?.name || null, s = after.selected_model?.name || null;
+    if (!s) notes.push('No eligible model remains under these conditions.');
+    else if (s !== b) notes.push(b ? `System selected ${s} as fallback.` : `System selected ${s}.`);
+    else notes.push(`No change: ${s} is still the best choice.`);
+    return { before, after, message: notes.join(' '), changed: b !== s };
+  }
+
+  /* ---------- auth ---------- */
+  async function hashPw(pw, salt) {
+    const data = new TextEncoder().encode(salt + ':' + pw);
+    if (window.crypto?.subtle) { const d = await crypto.subtle.digest('SHA-256', data); return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, '0')).join(''); }
+    let h = 5381; for (const b of data) h = ((h << 5) + h + b) >>> 0; return String(h);
+  }
+  const rnd = (n) => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; };
+  const users = () => store.get('vx_users', []);
+  const pub = (u) => ({ id: u.id, name: u.name, email: u.email });
+  async function ensureDemo() {
+    if (users().some((u) => u.email === 'demo@vortexa.ai')) return;
+    const salt = 'demo'; store.set('vx_users', users().concat({ id: 1, name: 'Demo User', email: 'demo@vortexa.ai', salt, hash: await hashPw('demo1234', salt), verified: true }));
+  }
+  function newSession(uid) { const t = Array.from({ length: 4 }, () => rnd(1e9).toString(36)).join(''); const s = store.get('vx_sessions', {}); s[t] = uid; store.set('vx_sessions', s); return t; }
+  function issueOtp(email) {
+    const code = String(rnd(1e6)).padStart(6, '0'), o = store.get('vx_otps', {});
+    o[email] = { code, expires: Date.now() + OTP_TTL * 1000, attempts: 0 }; store.set('vx_otps', o); return code;
+  }
+  function userFromToken(tok) { const uid = store.get('vx_sessions', {})[tok]; const u = users().find((x) => x.id === uid); return u ? pub(u) : null; }
+
+  const toEngine = (p) => ({ budget: p?.budget || 'low_cost', max_latency_ms: Number(p?.max_latency_ms) || 1000, min_capability: Number(p?.min_capability) || 1, context_tokens: Number(p?.context_tokens) || 8000 });
+
+  function analytics(uid) {
+    const h = store.get('vx_history', []).filter((x) => x.user_id === uid), now = Date.now() / 1000, buckets = Array(24).fill(0);
+    for (const x of h) { const i = 23 - Math.floor((now - x.created_at) / 3600); if (i >= 0 && i < 24) buckets[i]++; }
+    const ok = h.filter((x) => x.status === 'success'), usage = {};
+    ok.forEach((x) => (usage[x.selected_model] = (usage[x.selected_model] || 0) + 1));
+    return {
+      total_requests: h.length, total_cost_usd: Math.round(h.reduce((s, x) => s + x.est_cost, 0) * 1e6) / 1e6,
+      avg_latency_ms: ok.length ? Math.round(ok.reduce((s, x) => s + x.latency_ms, 0) / ok.length) : 0,
+      success_rate: h.length ? Math.round((1000 * ok.length) / h.length) / 10 : 0, fallbacks: h.reduce((s, x) => s + x.fallback_used, 0),
+      model_usage: Object.entries(usage).sort((a, b) => b[1] - a[1]).map(([model, count]) => ({ model, count })), requests_over_time: buckets, window_hours: 24,
+    };
+  }
+
+  window.localApi = async function (path, { method = 'GET', body, token } = {}) {
+    const [route, query] = path.split('?'), M = method.toUpperCase();
+    await ensureDemo();
+    const needUser = () => { const u = userFromToken(token); if (!u) throw fail(401, 'Your session expired. Log in again.'); return u; };
+
+    if (route === '/models' && M === 'GET') { const [m] = effective(); return { models: m, overrides }; }
+    if (route === '/auth/signup') {
+      const name = (body.name || '').trim(), email = (body.email || '').trim().toLowerCase();
+      if (!name) throw fail(400, 'Enter your name.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) throw fail(400, 'Enter a valid email address.');
+      if ((body.password || '').length < 8) throw fail(400, 'Password must be at least 8 characters.');
+      const us = users(), ex = us.find((u) => u.email === email);
+      if (ex && ex.verified) throw fail(409, 'An account with this email already exists. Log in instead.');
+      const salt = String(rnd(1e9)), hash = await hashPw(body.password, salt);
+      if (ex) Object.assign(ex, { name, salt, hash }); else us.push({ id: (us.at(-1)?.id || 0) + 1, name, email, salt, hash, verified: false });
+      store.set('vx_users', us); return { email, otp_ttl_seconds: OTP_TTL, dev_otp: issueOtp(email) };
+    }
+    if (route === '/auth/resend-otp') {
+      const email = (body.email || '').trim().toLowerCase(); if (!users().some((u) => u.email === email)) throw fail(404, 'No account found for this email.');
+      return { otp_ttl_seconds: OTP_TTL, dev_otp: issueOtp(email) };
+    }
+    if (route === '/auth/verify-otp') {
+      const email = (body.email || '').trim().toLowerCase(), o = store.get('vx_otps', {}), r = o[email];
+      if (!r) throw fail(400, 'No code was requested for this email. Request a new one.');
+      if (r.expires < Date.now()) throw fail(400, 'This code has expired. Request a new one.');
+      if (r.attempts >= 5) throw fail(429, 'Too many wrong attempts. Request a new code.');
+      if (r.code !== String(body.otp).trim()) { r.attempts++; store.set('vx_otps', o); throw fail(400, 'That code is incorrect.'); }
+      const us = users(), u = us.find((x) => x.email === email); u.verified = true; store.set('vx_users', us); delete o[email]; store.set('vx_otps', o);
+      return { token: newSession(u.id), user: pub(u) };
+    }
+    if (route === '/auth/login') {
+      const email = (body.email || '').trim().toLowerCase(), u = users().find((x) => x.email === email);
+      if (!u || (await hashPw(body.password || '', u.salt)) !== u.hash) throw fail(401, 'Email or password is incorrect.');
+      if (!u.verified) throw fail(403, 'Verify your email first. We can send a new code.');
+      return { token: newSession(u.id), user: pub(u) };
+    }
+    if (route === '/auth/me') return needUser();
+    if (route === '/auth/logout') { const s = store.get('vx_sessions', {}); delete s[token]; store.set('vx_sessions', s); return { ok: true }; }
+
+    const user = needUser();
+    if (route === '/route' && M === 'POST') {
+      const prompt = (body.prompt || '').trim(); if (!prompt || prompt.length > 1000) throw fail(422, 'Enter a question (up to 1000 characters).');
+      return routeRequest(user.id, prompt, toEngine(body.preferences), null, true);
+    }
+    if (route === '/simulate' && M === 'POST') {
+      const sc = {};
+      for (const it of body.scenario || []) { const o = (sc[it.model_id] = sc[it.model_id] || {}); if (it.mode === 'unavailable') o.unavailable = true; else if (it.mode === 'slow') o.latency_ms = 2500; else if (it.mode === 'fail') o.fail = true; }
+      return simulate((body.prompt || '').trim(), toEngine(body.preferences), sc);
+    }
+    if (route === '/simulate-failure' && M === 'POST') {
+      if (body.mode === 'clear' && !body.model_id) overrides = {};
+      else { const o = (overrides[body.model_id] = overrides[body.model_id] || {}); if (body.mode === 'fail') o.fail = true; else if (body.mode === 'unavailable') o.unavailable = true; else if (body.mode === 'slow') o.latency_ms = 2500; else delete overrides[body.model_id]; }
+      store.set('vx_overrides', overrides); return { overrides };
+    }
+    if (route === '/history' && M === 'GET') { const lim = Number(new URLSearchParams(query || '').get('limit')) || 50; return { history: store.get('vx_history', []).filter((x) => x.user_id === user.id).reverse().slice(0, lim) }; }
+    if (route === '/history' && M === 'DELETE') { store.set('vx_history', store.get('vx_history', []).filter((x) => x.user_id !== user.id)); return { ok: true }; }
+    if (route === '/analytics') return analytics(user.id);
+    throw fail(404, 'Not found.');
+  };
+})();
+
+</script>
+  <script>
+/* VORTEXA 3.0 frontend: vanilla JS single-page app (no build step). */
+'use strict';
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const usd = (n, d = 4) => '$' + Number(n || 0).toFixed(d);
+const ms = (n) => (n >= 1000 ? (n / 1000).toFixed(1) + 's' : Math.round(n) + 'ms');
+
+const DEFAULT_PREFS = { budget: 'low_cost', max_latency_ms: 1000, min_capability: 4, context_tokens: 8000 };
+const LAB_PREFS = { budget: 'balanced', max_latency_ms: 2000, min_capability: 3, context_tokens: 4000 };
+const state = {
+  token: localStorage.getItem('vx_token'),
+  user: null, models: [], health: { tts: 'browser' },
+  prefs: JSON.parse(localStorage.getItem('vx_prefs') || 'null') || { ...DEFAULT_PREFS },
+  labPrefs: { ...LAB_PREFS },
+  last: null, filter: 'all', draft: '', pendingEmail: '', devOtp: null, otpDeadline: 0,
+  voiceTab: false, labResult: null, offline: false,
+};
+let timer = null, audio = null;
+
+const LOGO = `<svg width="44" height="44" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6a4cff"/><stop offset="1" stop-color="#18b8ff"/></linearGradient></defs><circle cx="24" cy="24" r="21" fill="none" stroke="url(#lg)" stroke-width="3" stroke-dasharray="90 40"/><circle cx="24" cy="24" r="14" fill="none" stroke="url(#lg)" stroke-width="3" stroke-dasharray="50 40" transform="rotate(120 24 24)"/><circle cx="24" cy="24" r="6" fill="url(#lg)"/></svg>`;
+
+function toast(msg, err = false) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toast.t); toast.t = setTimeout(() => (t.className = ''), 3800);
+}
+
+async function api(path, { method = 'GET', body, auth = true } = {}) {
+  if (state.offline) {
+    try { return await window.localApi(path, { method, body, token: state.token }); }
+    catch (e) { if (e.status === 401 && auth) logout(false); throw e; }
+  }
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && state.token) headers.Authorization = 'Bearer ' + state.token;
+  let res;
+  try { res = await fetch(path, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch { throw Object.assign(new Error('Cannot reach the server. Is the backend running?'), { status: 0 }); }
+  if (res.status === 401 && auth) { logout(false); throw Object.assign(new Error('Your session expired. Log in again.'), { status: 401 }); }
+  const ct = res.headers.get('content-type') || '';
+  const data = ct.includes('json') ? await res.json() : await res.blob();
+  if (!res.ok) {
+    let msg = typeof data?.detail === 'string' ? data.detail : 'Check your input and try again.';
+    throw Object.assign(new Error(msg), { status: res.status });
+  }
+  return data;
+}
+
+function logout(call = true) {
+  if (call && state.token) api('/auth/logout', { method: 'POST' }).catch(() => {});
+  state.token = null; state.user = null; localStorage.removeItem('vx_token');
+  if (location.hash !== '#/login') location.hash = '#/login';
+}
+
+/* ---------- shared pieces ---------- */
+function brand(small = true) {
+  return `<div class="brand">${LOGO}<div><b>VORTEXA <i>3.0</i></b>${small ? '<small>ModelRouter × ElevenLabs</small>' : ''}</div></div>`;
+}
+function passwordField(id, label, ph) {
+  return `<label class="field"><span>${label}</span><div class="input"><span class="ico">🔒</span><input id="${id}" type="password" placeholder="${ph}" autocomplete="off"><button type="button" class="eye" data-eye="${id}" aria-label="Show or hide password">👁</button></div></label>`;
+}
+function bindEyes() { $$('[data-eye]').forEach((b) => (b.onclick = () => { const i = $('#' + b.dataset.eye); i.type = i.type === 'password' ? 'text' : 'password'; })); }
+
+const NAV = [['home', '⌂', 'Home'], ['playground', '◈', 'Playground'], ['flow', '⇄', 'Routing Flow'], ['lab', '⚗', 'Model Lab'], ['analytics', '▤', 'Analytics'], ['settings', '⚙', 'Settings']];
+function shell(active, inner, topExtra = '') {
+  const u = state.user || { name: '?', email: '' };
+  return `<div class="shell"><aside class="side">${brand()}
+    <div class="me"><div class="avatar">${esc(u.name[0]?.toUpperCase())}</div><div><b>${esc(u.name)}</b><small>${esc(u.email)}</small></div></div>
+    <nav class="nav">${NAV.map(([k, g, l]) => `<a href="#/${k}" class="${k === active ? 'on' : ''}"><span class="g">${g}</span>${l}</a>`).join('')}</nav>
+    <div class="spacer"></div><nav class="nav"><a href="#/login" id="logout"><span class="g">⎋</span>Log Out</a></nav></aside>
+    <main class="main"><div class="topbar">${topExtra}<button class="pill" id="va">🎙 Voice Assistant</button></div>${inner}</main></div>`;
+}
+function bindShell() {
+  const lo = $('#logout'); if (lo) lo.onclick = (e) => { e.preventDefault(); logout(); };
+  const va = $('#va'); if (va) va.onclick = () => { state.voiceTab = true; location.hash = '#/playground'; };
+}
+
+/* preferences controls */
+const OPT = {
+  budget: [['low_cost', 'Low Cost'], ['balanced', 'Balanced'], ['high_quality', 'High Quality']],
+  max_latency_ms: [500, 1000, 2000, 3000, 5000].map((v) => [v, `${v / 1000}s (${v}ms)`]),
+  min_capability: [[1, 'Any (1/5)'], [2, 'Basic (2/5)'], [3, 'Medium (3/5)'], [4, 'High (4/5)'], [5, 'Highest (5/5)']],
+  context_tokens: [2000, 4000, 8000, 16000, 32000].map((v) => [v, `${v / 1000}K tokens`]),
+};
+const PLABEL = { budget: '💰 Budget Preference', max_latency_ms: '⏱ Max Latency', min_capability: '★ Min. Capability', context_tokens: '▭ Context Length' };
+function prefsHtml(p, pre) {
+  return `<div class="prefs">${Object.keys(OPT).map((k) => `<div class="pref"><label for="${pre}${k}">${PLABEL[k]}</label><select id="${pre}${k}">${OPT[k].map(([v, l]) => `<option value="${v}" ${String(p[k]) === String(v) ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`).join('')}</div>`;
+}
+function bindPrefs(p, pre, persist) {
+  Object.keys(OPT).forEach((k) => { const s = $('#' + pre + k); if (s) s.onchange = () => { p[k] = k === 'budget' ? s.value : Number(s.value); if (persist) localStorage.setItem('vx_prefs', JSON.stringify(p)); }; });
+}
+
+/* voice input */
+function startVoice(input, btn) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return toast('Voice input needs Chrome or Edge. Type your question instead.', true);
+  if (btn.classList.contains('live') && startVoice.rec) { startVoice.rec.stop(); return; }
+  const rec = new SR(); startVoice.rec = rec; rec.lang = navigator.language || 'en-US'; rec.interimResults = true;
+  rec.onstart = () => btn.classList.add('live');
+  rec.onend = () => btn.classList.remove('live');
+  rec.onerror = (e) => toast(e.error === 'not-allowed' ? 'Allow microphone access to use voice input.' : 'Voice input stopped: ' + e.error, true);
+  rec.onresult = (e) => { input.value = [...e.results].map((r) => r[0].transcript).join(' ').slice(0, 1000); input.dispatchEvent(new Event('input')); };
+  rec.start();
+}
+
+/* ask box shared by Home + Playground */
+function askHtml(placeholder) {
+  return `<div class="askbox"><button class="mic" id="mic" aria-label="Speak your question">🎙</button>
+    <textarea id="q" rows="1" maxlength="1000" placeholder="${placeholder}">${esc(state.draft)}</textarea><span class="count" id="cnt">0/1000</span>
+    <button class="mic" id="go-mini" aria-label="Route">➤</button></div>`;
+}
+function bindAsk() {
+  const q = $('#q'), cnt = $('#cnt');
+  const upd = () => { state.draft = q.value; cnt.textContent = `${q.value.length}/1000`; q.style.height = 'auto'; q.style.height = Math.min(q.scrollHeight, 140) + 'px'; };
+  q.oninput = upd; upd();
+  $('#mic').onclick = () => startVoice(q, $('#mic'));
+  const go = async () => {
+    const prompt = q.value.trim();
+    if (!prompt) return toast('Type or speak a question first.', true);
+    $$('#go,#go-mini').forEach((b) => (b.disabled = true)); const g = $('#go'); if (g) g.textContent = 'Routing…';
+    try { state.last = await api('/route', { method: 'POST', body: { prompt, preferences: state.prefs } }); state.filter = 'all'; location.hash = '#/flow'; }
+    catch (e) { toast(e.message, true); $$('#go,#go-mini').forEach((b) => (b.disabled = false)); if (g) g.textContent = 'Route My Question  →'; }
+  };
+  $('#go').onclick = go; $('#go-mini').onclick = go;
+  q.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); go(); } };
+}
+
+/* ---------- auth views ---------- */
+const ORB = `<svg class="orb" viewBox="0 0 300 260" aria-hidden="true"><defs><radialGradient id="og" cx=".5" cy=".45" r=".6"><stop offset="0" stop-color="#8fe3ff"/><stop offset=".45" stop-color="#2f6bff" stop-opacity=".85"/><stop offset="1" stop-color="#0a1450" stop-opacity="0"/></radialGradient></defs><ellipse cx="150" cy="215" rx="95" ry="14" fill="#18b8ff" opacity=".35"/><ellipse cx="150" cy="215" rx="60" ry="8" fill="#6a4cff" opacity=".6"/><circle cx="150" cy="115" r="92" fill="url(#og)"/><g fill="none" stroke="#bfeaff" stroke-width="1.2" opacity=".8"><circle cx="150" cy="115" r="70"/><ellipse cx="150" cy="115" rx="70" ry="28"/><ellipse cx="150" cy="115" rx="28" ry="70"/><path d="M95 80q55 30 110 0M95 150q55-30 110 0"/></g>${[[150, 45], [220, 115], [150, 185], [80, 115], [200, 65], [100, 165], [200, 165], [100, 65]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#fff"/>`).join('')}</svg>`;
+function authFrame(form, signup = false) {
+  const feats = [['⚙', 'Intelligent Model Selection'], ['⏱', 'Cost & Latency Optimization'], ['🎙', 'Voice Powered AI'], ['▤', 'Real-time Analytics']];
+  return `<div class="auth"><div class="auth-card"><div class="auth-brand">${brand()}<p class="tagline">Smarter Routing. Better AI. Your Voice.</p>
+    ${signup ? ORB : `<div class="features">${feats.map(([i, t]) => `<div><span class="fi">${i}</span>${t}</div>`).join('')}</div>`}</div>
+    <div class="auth-form">${form}</div></div></div>`;
+}
+function viewLogin() {
+  return [authFrame(`<h2>Welcome Back</h2><p class="sub">Sign in to continue to your account</p>
+    <div class="tabs"><button class="on">Login</button><button id="t-signup">Sign Up</button></div>
+    <label class="field"><span>Email ID</span><div class="input"><span class="ico">✉</span><input id="email" type="email" placeholder="you@example.com" autocomplete="username"></div></label>
+    ${passwordField('pw', 'Password', 'Enter your password')}
+    <div class="row-end"><button class="link" id="forgot">Forgot Password?</button></div>
+    <button class="btn block" id="go">Login</button>
+    <div class="or">OR</div><button class="btn ghost block" id="google">G&nbsp; Continue with Google</button>
+    <p class="center muted" style="margin-top:16px">Don't have an account? <a class="link" href="#/signup">Sign Up</a></p>
+    <p class="center dim" style="margin-top:8px;font-size:12px">Demo account: demo@vortexa.ai / demo1234</p>`), () => {
+    bindEyes();
+    $('#t-signup').onclick = () => (location.hash = '#/signup');
+    $('#forgot').onclick = () => toast('Password reset is not part of this prototype yet.');
+    $('#google').onclick = () => toast('Google sign-in needs an OAuth client ID. Not configured in this build.');
+    const go = async () => {
+      const email = $('#email').value.trim(), password = $('#pw').value;
+      if (!email || !password) return toast('Enter your email and password.', true);
+      $('#go').disabled = true;
+      try {
+        const r = await api('/auth/login', { method: 'POST', body: { email, password }, auth: false });
+        state.token = r.token; state.user = r.user; localStorage.setItem('vx_token', r.token); location.hash = '#/home';
+      } catch (e) {
+        $('#go').disabled = false; toast(e.message, true);
+        if (e.status === 403) { state.pendingEmail = email.toLowerCase(); try { const r = await api('/auth/resend-otp', { method: 'POST', body: { email }, auth: false }); startOtp(r); location.hash = '#/verify'; } catch {} }
+      }
+    };
+    $('#go').onclick = go; $('#pw').onkeydown = (e) => e.key === 'Enter' && go();
+  }];
+}
+function viewSignup() {
+  return [authFrame(`<h2>Create Your Account</h2><p class="sub">Join VORTEXA and start exploring AI routing</p>
+    <label class="field"><span>Full Name</span><div class="input"><span class="ico">👤</span><input id="name" placeholder="Enter your name" autocomplete="name"></div></label>
+    <label class="field"><span>Email ID</span><div class="input"><span class="ico">✉</span><input id="email" type="email" placeholder="you@example.com" autocomplete="email"></div></label>
+    ${passwordField('pw', 'Password', 'Create a strong password (8+ characters)')}
+    ${passwordField('pw2', 'Confirm Password', 'Re-enter your password')}
+    <button class="btn block" id="go">Sign Up</button>
+    <p class="center muted" style="margin-top:16px">Already have an account? <a class="link" href="#/login">Login</a></p>`, true), () => {
+    bindEyes();
+    const go = async () => {
+      const name = $('#name').value.trim(), email = $('#email').value.trim(), pw = $('#pw').value;
+      if (!name || !email) return toast('Enter your name and email.', true);
+      if (pw.length < 8) return toast('Password must be at least 8 characters.', true);
+      if (pw !== $('#pw2').value) return toast('Passwords do not match.', true);
+      $('#go').disabled = true;
+      try { const r = await api('/auth/signup', { method: 'POST', body: { name, email, password: pw }, auth: false }); state.pendingEmail = r.email; startOtp(r); location.hash = '#/verify'; }
+      catch (e) { $('#go').disabled = false; toast(e.message, true); }
+    };
+    $('#go').onclick = go;
+  }];
+}
+function startOtp(r) { state.otpDeadline = Date.now() + (r.otp_ttl_seconds || 180) * 1000; state.devOtp = r.dev_otp || null; }
+function viewVerify() {
+  if (!state.pendingEmail) { location.hash = '#/login'; return ['', null]; }
+  return [`<div class="auth"><div class="verify-card"><div class="mail">✉</div><h2>Verify Your Email</h2>
+    <p class="muted" style="margin-top:6px">We've sent a 6-digit OTP to<br><b style="color:var(--text)">${esc(state.pendingEmail)}</b></p>
+    <div class="otp">${[0, 1, 2, 3, 4, 5].map((i) => `<input inputmode="numeric" maxlength="1" data-i="${i}" aria-label="Digit ${i + 1}">`).join('')}</div>
+    <p class="muted" style="font-size:12.5px">Code will expire in <b id="otp-t">--:--</b></p>
+    ${state.devOtp ? `<div class="devhint">Dev mode: no email server is set, so your code is <b>${state.devOtp}</b>.</div>` : ''}
+    <button class="btn block" id="go" style="margin-top:14px">Verify OTP</button>
+    <p class="muted" style="margin:16px 0 8px">Didn't receive the code? <button class="link" id="resend">Resend OTP</button></p>
+    <a class="link" href="#/login">← Back to Login</a></div></div>`, () => {
+    const ins = $$('.otp input'); ins[0].focus();
+    ins.forEach((el, i) => {
+      el.oninput = () => { el.value = el.value.replace(/\D/g, ''); if (el.value && ins[i + 1]) ins[i + 1].focus(); };
+      el.onkeydown = (e) => { if (e.key === 'Backspace' && !el.value && ins[i - 1]) ins[i - 1].focus(); if (e.key === 'Enter') go(); };
+      el.onpaste = (e) => { const d = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 6); if (d) { e.preventDefault(); [...d].forEach((c, j) => (ins[j].value = c)); ins[Math.min(d.length, 5)].focus(); } };
+    });
+    const tick = () => { const s = Math.max(0, Math.round((state.otpDeadline - Date.now()) / 1000)); const t = $('#otp-t'); if (t) t.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; };
+    tick(); timer = setInterval(tick, 1000);
+    async function go() {
+      const otp = ins.map((i) => i.value).join('');
+      if (otp.length !== 6) return toast('Enter all 6 digits.', true);
+      try { const r = await api('/auth/verify-otp', { method: 'POST', body: { email: state.pendingEmail, otp }, auth: false }); state.token = r.token; state.user = r.user; localStorage.setItem('vx_token', r.token); state.pendingEmail = ''; toast('Email verified. Welcome!'); location.hash = '#/home'; }
+      catch (e) { toast(e.message, true); }
+    }
+    $('#go').onclick = go;
+    $('#resend').onclick = async () => { try { const r = await api('/auth/resend-otp', { method: 'POST', body: { email: state.pendingEmail }, auth: false }); startOtp(r); toast('A new code has been sent.'); render(); } catch (e) { toast(e.message, true); } };
+  }];
+}
+
+/* ---------- main views ---------- */
+const SCENE = `<svg class="scene" viewBox="0 0 1200 220" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a5c" stop-opacity="0"/><stop offset="1" stop-color="#1a3fd0" stop-opacity=".55"/></linearGradient><linearGradient id="mt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a4fd8"/><stop offset="1" stop-color="#050c26"/></linearGradient></defs><rect width="1200" height="220" fill="url(#sky)"/>${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 97) % 1200}" cy="${(i * 53) % 110}" r="${i % 3 ? 0.9 : 1.6}" fill="#bcd4ff" opacity="${0.35 + (i % 5) * 0.12}"/>`).join('')}<path d="M0 220V150l90-50 70 40 110-90 100 80 90-45 120 95 100-70 110 60 130-85 120 90 90-40 90 55V220z" fill="url(#mt)" opacity=".85"/><path d="M0 220V185l130-45 110 50 150-60 120 55 170-65 130 60 140-40 250 60V220z" fill="#060f33"/></svg>`;
+async function viewHome() {
+  let recent = [];
+  try { recent = (await api('/history?limit=3')).history; } catch {}
+  const rec = recent.length ? `<div class="card" style="margin-top:16px"><h3>Recent routing</h3>${recent.map((x) => `<div class="recent"><span class="rp">${esc(x.prompt.slice(0, 70))}</span><span class="tag">${esc(x.category)}</span><span class="tag ${x.status === 'success' ? 'ok' : 'bad'}">${esc(x.selected_model || x.status)}</span></div>`).join('')}</div>` : '';
+  return [shell('home', `<h1>Welcome back, ${esc(state.user.name.split(' ')[0])}! 👋</h1>
+    <p class="lead">Ask your question, set your preferences, and let ModelRouter find the best model for you.</p>
+    ${askHtml('Type your question or speak…')}${prefsHtml(state.prefs, 'p-')}
+    <button class="btn block" id="go">Route My Question &nbsp;→</button>${rec}${SCENE}`), () => { bindShell(); bindAsk(); bindPrefs(state.prefs, 'p-', true); }];
+}
+function viewPlayground() {
+  const v = state.voiceTab;
+  return [shell('playground', `<div class="headrow"><div><h1>AI Request Playground</h1><p class="muted">Ask your question, set your preferences, and let ModelRouter find the best model for you.</p></div>
+    <div class="seg"><button id="tab-t" class="${v ? '' : 'on'}">Text Input</button><button id="tab-v" class="${v ? 'on' : ''}">Voice Input</button></div></div>
+    ${askHtml('Explain pointers in C++')}
+    <h3 style="margin:18px 0 0">Set Your Preferences</h3>${prefsHtml(state.prefs, 'p-')}
+    <button class="btn block" id="go">Route My Question &nbsp;→</button>`), () => {
+    bindShell(); bindAsk(); bindPrefs(state.prefs, 'p-', true);
+    $('#tab-t').onclick = () => { state.voiceTab = false; render(); };
+    $('#tab-v').onclick = () => { state.voiceTab = true; render(); };
+    if (v) { state.voiceTab = false; setTimeout(() => $('#mic').click(), 150); }
+  }];
+}
+
+function modelCard(c, selId) {
+  const sel = c.id === selId, rej = !c.eligible;
+  const tag = rej ? '<span class="tag bad">Rejected</span>' : '<span class="tag ok">Eligible</span>';
+  const badges = (c.badges || []).map((b) => `<span class="tag ${/High|Limited|Unavail/.test(b) ? 'warn' : ''}">${esc(b)}</span>`).join('') + (sel ? '<span class="tag ok">Recommended</span>' : '');
+  return `<div class="mcard ${sel ? 'sel' : ''} ${rej ? 'rej' : ''}"><div class="mhead"><div><b>${esc(c.name)}</b><small>${esc(c.tagline)}</small></div>${tag}</div>
+    <div class="kv"><div>Cost (in/out)<b>${usd(c.cost_in, 3)} / ${usd(c.cost_out, 3)}</b></div><div>Latency (avg)<b>${ms(c.latency_ms)}</b></div><div>Capability<b>${c.capability}/5</b></div><div>Context Length<b>${c.context_tokens / 1000}K</b></div></div>
+    <div class="tags">${badges}</div><button class="btn ghost small block" data-more>View Details</button>
+    <div class="details"><div>Score: <b>${c.eligible ? c.score : 'n/a'}</b> · Est. cost for this request: <b>${usd(c.est_cost_usd, 5)}</b></div>
+    <div>Tasks: ${c.tasks.map(esc).join(', ')} · Reliability: ${Math.round(c.availability * 100)}%</div>
+    ${rej ? `<div style="margin-top:6px">Why rejected:</div><ul>${c.reasons_rejected.map((r) => `<li>${esc(r)}</li>`).join('')}</ul>` : ''}</div></div>`;
+}
+function viewFlow() {
+  const r = state.last;
+  if (!r) return [shell('flow', `<div class="card empty"><h2>No routing yet</h2><p>Ask a question and the model comparison will appear here.</p><a class="btn" href="#/playground">Open Playground</a></div>`), bindShell];
+  const selId = r.selected_model?.id;
+  const list = r.candidates.filter((c) => state.filter === 'all' || (state.filter === 'eligible' ? c.eligible : !c.eligible));
+  const ok = r.status === 'success';
+  const tabs = [['all', `All Models`], ['eligible', `Eligible (${r.eligible_count})`], ['rejected', `Rejected (${r.rejected_count})`]];
+  const att = r.attempts.length > 1 || r.fallback_used ? `<div class="attempts"><b>Attempts</b>${r.attempts.map((a) => `<div><span class="tag ${a.outcome === 'success' ? 'ok' : 'bad'}">${a.outcome}</span>${esc(a.model)}${a.error ? ' · ' + esc(a.error) : ''}</div>`).join('')}</div>` : '';
+  const est = r.estimated;
+  return [shell('flow', `<div class="headrow"><div><h1>Model Comparison</h1><p class="muted">Request type: <b>${esc(r.category)}</b> · requires capability ${r.required_capability}/5 · "${esc(r.prompt.slice(0, 80))}"</p></div>
+    <div class="seg" id="filters">${tabs.map(([k, l]) => `<button data-f="${k}" class="${state.filter === k ? 'on' : ''}">${l}</button>`).join('')}</div></div>
+    <div class="cards">${list.map((c) => modelCard(c, selId)).join('') || '<p class="muted">Nothing in this filter.</p>'}</div>
+    <div class="grid2"><div class="card"><div class="status ${ok ? '' : 'bad'}"><div class="dot">${ok ? '✓' : '!'}</div><div><b style="font-size:16px">${ok ? 'Routing Completed!' : r.status === 'failed' ? 'All models failed' : 'No eligible model'}</b>
+      <div class="muted">${ok ? `Selected Model: <b style="color:var(--text)">${esc(r.selected_model.name)}</b>${r.fallback_used ? ' (fallback)' : ''}` : esc(r.message)}</div></div></div>
+      ${est ? `<div class="stats3"><div class="stat"><small>Estimated Cost</small><b>${usd(est.cost_usd, 5)}</b></div><div class="stat"><small>Estimated Latency</small><b>${ms(est.latency_ms)}</b></div><div class="stat"><small>Estimated Quality</small><b>${est.quality}</b></div></div>` : ''}
+      ${att}${ok ? `<h3 style="margin-top:14px">Response <span class="tag warn">simulated</span></h3><div class="resp">${esc(r.response)}</div>` : ''}</div>
+    <div class="card"><h3>Why this model?</h3>${r.reasons.length ? `<ul class="checks">${r.reasons.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : `<p class="muted">${esc(r.message)}</p>`}
+      <div class="player"><button class="play" id="play" aria-label="Play explanation">▶</button><div class="wave" id="wave">${Array.from({ length: 28 }, (_, i) => `<span style="animation-delay:${(i % 9) * 0.1}s;height:${20 + ((i * 37) % 70)}%"></span>`).join('')}</div><span class="muted" style="font-size:12px">Listen to Explanation</span></div></div></div>`),
+  () => {
+    bindShell();
+    $$('#filters button').forEach((b) => (b.onclick = () => { state.filter = b.dataset.f; render(); }));
+    $$('[data-more]').forEach((b) => (b.onclick = () => b.closest('.mcard').classList.toggle('open')));
+    $('#play').onclick = () => playExplanation(r.explanation);
+  }];
+}
+
+async function playExplanation(text) {
+  const wave = $('#wave'), btn = $('#play');
+  const stop = () => { wave?.classList.remove('playing'); if (btn) btn.textContent = '▶'; };
+  if (audio) { audio.pause(); audio = null; stop(); return; }
+  if ('speechSynthesis' in window && speechSynthesis.speaking) { speechSynthesis.cancel(); stop(); return; }
+  wave.classList.add('playing'); btn.textContent = '■';
+  try {
+    if (state.health.tts === 'elevenlabs') {
+      const blob = await api('/tts', { method: 'POST', body: { text } });
+      audio = new Audio(URL.createObjectURL(blob)); audio.onended = () => { audio = null; stop(); }; await audio.play(); return;
+    }
+  } catch (e) { toast('ElevenLabs unavailable, using the browser voice.', true); }
+  if (!('speechSynthesis' in window)) { stop(); return toast('This browser cannot play speech.', true); }
+  const u = new SpeechSynthesisUtterance(text); u.onend = stop; u.onerror = stop; speechSynthesis.speak(u);
+}
+
+function viewLab() {
+  const opts = (sel) => state.models.map((m) => `<option value="${m.id}" ${m.id === sel ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
+  const L = state.labResult;
+  const row = (m) => `<tr><td>${m.label}</td><td>${m.r.selected_model ? esc(m.r.selected_model.name) : '<span class="tag bad">none</span>'}</td><td>${m.r.estimated ? usd(m.r.estimated.cost_usd, 5) : '–'}</td><td>${m.r.estimated ? ms(m.r.estimated.latency_ms) : '–'}</td><td>${m.r.fallback_used ? 'Yes' : 'No'}</td></tr>`;
+  return [shell('lab', `<h1>What If? Simulation Lab</h1><p class="lead">Try different scenarios and see how routing adapts. Simulations are not saved to your history.</p>
+    <div class="card"><label class="field"><span>Question to route</span><div class="input"><input id="lq" value="${esc(state.draft || 'Explain pointers in C++')}" maxlength="1000"></div></label>
+    ${prefsHtml(state.labPrefs, 'l-')}
+    <div class="scn"><div>1. Make a model unavailable</div><select id="s1m">${opts('model-b')}</select><label class="sw"><input type="checkbox" id="s1" checked><i></i></label></div>
+    <div class="scn"><div>2. Simulate high latency (2.5s)</div><select id="s2m">${opts('model-b')}</select><label class="sw"><input type="checkbox" id="s2"><i></i></label></div>
+    <button class="btn block" id="run" style="margin-top:16px">Run Simulation</button>
+    ${L ? `<div class="result-banner"><span style="font-size:20px">ⓘ</span><div><b>Simulation Result</b><div>${esc(L.message)}</div></div></div>
+      <div class="tablewrap" style="margin-top:12px"><table><tr><th></th><th>Selected model</th><th>Est. cost</th><th>Est. latency</th><th>Fallback used</th></tr>${row({ label: 'Normal conditions', r: L.before })}${row({ label: 'With your scenario', r: L.after })}</table></div>` : ''}</div>
+    <div class="card" style="margin-top:16px"><h3>Live failure injection <span class="tag warn">dev only</span></h3><p class="muted" style="margin-bottom:12px">Makes a model fail on every real call, so the router has to use its fallback. Applies to your next routed questions until cleared.</p>
+    <div class="scn" style="border:0"><select id="fm">${opts('model-b')}</select><div></div><div style="display:flex;gap:8px"><button class="btn small" id="finj">Make it fail</button><button class="btn ghost small" id="fclr">Clear all</button></div></div></div>`),
+  () => {
+    bindShell(); bindPrefs(state.labPrefs, 'l-', false);
+    $('#run').onclick = async () => {
+      const scenario = [];
+      if ($('#s1').checked) scenario.push({ model_id: $('#s1m').value, mode: 'unavailable' });
+      if ($('#s2').checked) scenario.push({ model_id: $('#s2m').value, mode: 'slow' });
+      const prompt = $('#lq').value.trim(); if (!prompt) return toast('Enter a question first.', true);
+      state.draft = prompt; $('#run').disabled = true; $('#run').textContent = 'Running…';
+      try { state.labResult = await api('/simulate', { method: 'POST', body: { prompt, preferences: state.labPrefs, scenario } }); render(); }
+      catch (e) { toast(e.message, true); $('#run').disabled = false; $('#run').textContent = 'Run Simulation'; }
+    };
+    $('#finj').onclick = async () => { try { await api('/simulate-failure', { method: 'POST', body: { model_id: $('#fm').value, mode: 'fail' } }); toast($('#fm').selectedOptions[0].text + ' will now fail on every call.'); } catch (e) { toast(e.message, true); } };
+    $('#fclr').onclick = async () => { try { await api('/simulate-failure', { method: 'POST', body: { mode: 'clear' } }); toast('All injected failures cleared.'); } catch (e) { toast(e.message, true); } };
+  }];
+}
+
+function lineChart(vals) {
+  const W = 560, H = 160, P = 24, max = Math.max(1, ...vals);
+  const pts = vals.map((v, i) => [P + (i * (W - 2 * P)) / (vals.length - 1), H - P - (v / max) * (H - 2 * P)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  return `<svg class="chart" viewBox="0 0 ${W} ${H + 14}" role="img" aria-label="Requests over the last 24 hours"><defs><linearGradient id="ar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18b8ff" stop-opacity=".35"/><stop offset="1" stop-color="#18b8ff" stop-opacity="0"/></linearGradient></defs>
+    ${[0, 1, 2, 3].map((i) => `<line x1="${P}" x2="${W - P}" y1="${P + (i * (H - 2 * P)) / 3}" y2="${P + (i * (H - 2 * P)) / 3}" stroke="#5e80ff33"/>`).join('')}
+    <path d="${d} L${pts.at(-1)[0]} ${H - P} L${P} ${H - P} Z" fill="url(#ar)"/><path d="${d}" fill="none" stroke="#18b8ff" stroke-width="2.2"/>
+    <text x="${P}" y="${H + 10}" fill="#8fa2d4" font-size="10">24h ago</text><text x="${W - P}" y="${H + 10}" fill="#8fa2d4" font-size="10" text-anchor="end">now</text><text x="${P - 4}" y="${P + 3}" fill="#8fa2d4" font-size="10" text-anchor="end">${max}</text></svg>`;
+}
+async function viewAnalytics() {
+  let a, h;
+  try { [a, h] = await Promise.all([api('/analytics'), api('/history?limit=25')]); } catch (e) { toast(e.message, true); a = { total_requests: 0, total_cost_usd: 0, avg_latency_ms: 0, success_rate: 0, model_usage: [], requests_over_time: Array(24).fill(0), fallbacks: 0 }; h = { history: [] }; }
+  const top = Math.max(1, ...a.model_usage.map((u) => u.count));
+  return [shell('analytics', `<h1>Analytics</h1><p class="lead">How your requests were routed.</p>
+    <div class="kpis"><div class="card kpi"><small>Total Requests</small><b>${a.total_requests}</b></div><div class="card kpi"><small>Total Est. Cost</small><b>${usd(a.total_cost_usd, 4)}</b></div><div class="card kpi"><small>Avg. Latency</small><b>${a.avg_latency_ms}ms</b></div><div class="card kpi"><small>Success Rate</small><b>${a.success_rate}%</b></div></div>
+    <div class="grid2" style="margin-top:0"><div class="card"><h3>Requests over time (last 24h)</h3>${lineChart(a.requests_over_time)}</div>
+    <div class="card"><h3>Model usage</h3>${a.model_usage.length ? `<div class="bars">${a.model_usage.map((u) => `<div class="b"><span>${esc(u.model)}</span><div class="track"><i style="width:${(u.count / top) * 100}%"></i></div><span>${u.count}</span></div>`).join('')}</div>` : '<p class="muted">No successful requests yet.</p>'}<p class="muted" style="margin-top:14px">Fallbacks used: <b>${a.fallbacks}</b></p></div></div>
+    <div class="card" style="margin-top:16px"><div class="headrow" style="margin:0 0 8px"><h3>Routing history</h3><button class="btn ghost small" id="clr">Clear history</button></div>
+    ${h.history.length ? `<div class="tablewrap"><table><tr><th>Time</th><th>Prompt</th><th>Type</th><th>Model</th><th>Status</th><th>Why</th></tr>${h.history.map((x) => `<tr><td>${new Date(x.created_at * 1000).toLocaleString()}</td><td>${esc(x.prompt.slice(0, 60))}</td><td>${esc(x.category)}</td><td>${esc(x.selected_model || '–')}${x.fallback_used ? ' <span class="tag warn">fallback</span>' : ''}</td><td><span class="tag ${x.status === 'success' ? 'ok' : 'bad'}">${esc(x.status)}</span></td><td class="muted">${esc((x.reason || '').slice(0, 90))}</td></tr>`).join('')}</table></div>` : '<p class="muted">Nothing yet. Route a question to see it here.</p>'}</div>`),
+  () => { bindShell(); const c = $('#clr'); if (c) c.onclick = async () => { await api('/history', { method: 'DELETE' }); toast('History cleared.'); render(); }; }];
+}
+
+function viewSettings() {
+  const el = state.health.tts === 'elevenlabs';
+  return [shell('settings', `<h1>Settings</h1><p class="lead">Account and voice options.</p>
+    <div class="card" style="margin-bottom:14px"><h3>Account</h3><div class="kv"><div>Name<b>${esc(state.user.name)}</b></div><div>Email<b>${esc(state.user.email)}</b></div></div></div>
+    <div class="card" style="margin-bottom:14px"><h3>Mode</h3><p class="muted">${state.offline ? 'Standalone demo: routing engine runs in this browser, data is stored locally.' : 'Connected to the FastAPI backend.'}</p></div>
+    <div class="card" style="margin-bottom:14px"><h3>Voice</h3><p class="muted">Explanation voice: <span class="tag ${el ? 'ok' : 'warn'}">${el ? 'ElevenLabs' : 'Browser voice'}</span></p>${el ? '' : '<p class="muted" style="margin-top:8px">Set <code>ELEVENLABS_API_KEY</code> on the server to use ElevenLabs voices.</p>'}</div>
+    <div class="card"><h3>Routing defaults</h3><button class="btn ghost small" id="reset">Reset preferences</button></div>`),
+  () => { bindShell(); $('#reset').onclick = () => { state.prefs = { ...DEFAULT_PREFS }; localStorage.setItem('vx_prefs', JSON.stringify(state.prefs)); toast('Preferences reset.'); }; }];
+}
+
+/* ---------- router ---------- */
+const VIEWS = { login: viewLogin, signup: viewSignup, verify: viewVerify, home: viewHome, playground: viewPlayground, flow: viewFlow, lab: viewLab, analytics: viewAnalytics, settings: viewSettings };
+const PUBLIC = ['login', 'signup', 'verify'];
+async function render() {
+  clearInterval(timer);
+  if (audio) { audio.pause(); audio = null; } if ('speechSynthesis' in window) speechSynthesis.cancel();
+  let name = (location.hash || '').replace(/^#\//, '').split('?')[0];
+  if (!VIEWS[name]) name = state.token ? 'home' : 'login';
+  if (!PUBLIC.includes(name) && !state.token) return (location.hash = '#/login');
+  if (state.token && !state.user) { try { state.user = await api('/auth/me'); } catch { return; } }
+  if (state.token && PUBLIC.includes(name) && name !== 'verify') return (location.hash = '#/home');
+  if (state.token && !state.models.length) { try { state.models = (await api('/models', { auth: false })).models; } catch {} }
+  const [html, bind] = await VIEWS[name]();
+  if (name !== (location.hash || '').replace(/^#\//, '').split('?')[0] && html === '') return;
+  $('#app').innerHTML = html; if (bind) bind();
+}
+window.addEventListener('hashchange', render);
+(async () => {
+  try {
+    if (location.protocol === 'file:') throw new Error('no backend');
+    const r = await fetch('/health'); const h = r.ok ? await r.json() : null;
+    if (!h || h.status !== 'ok') throw new Error('no backend');
+    state.health = h;
+  } catch { state.offline = true; state.health = { status: 'ok', tts: 'browser', mode: 'standalone' }; }
+  render();
+})();
+
+</script>
+</body>
+</html>
